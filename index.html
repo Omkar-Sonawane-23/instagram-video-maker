@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Generator</title>
+    <style>
+        /* Instagram-like gradient background */
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(45deg, #ff6a00, #ee0979);
+            color: white;
+            text-align: center;
+        }
+
+        /* Centered container with padding */
+        .container {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        /* Title styling */
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Form styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        label {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #f1f1f1;
+        }
+
+        input[type="file"], input[type="text"] {
+            padding: 0.6rem;
+            border: none;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #333;
+            cursor: pointer;
+        }
+
+        /* Merge button styling */
+        button {
+            padding: 0.8rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            background: #3897f0;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #3184d9;
+        }
+
+        /* Small icons for labels */
+        .icon {
+            margin-right: 0.5rem;
+        }
+
+        /* Loader styling */
+        .loader {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            border-top: 6px solid #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 Video and Audio Merger</h1>
+        <form id="uploadForm">
+            <label for="videoInput">
+                <span class="icon">🎥</span> Upload Video:
+            </label>
+            <input type="file" id="videoInput" accept="video/*" required>
+
+            <label for="audioInput">
+                <span class="icon">🎶</span> Upload Audio:
+            </label>
+            <input type="file" id="audioInput" accept="audio/*" required>
+
+            <label for="overlayText">
+                <span class="icon">✏️</span> Text Overlay:
+            </label>
+            <input type="text" id="overlayText" placeholder="Enter text here" required>
+
+            <button type="submit">Merge and Download</button>
+        </form>
+        <div class="loader" id="loader"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const loader = document.getElementById('loader');
+
+        form.onsubmit = async (event) => {
+            event.preventDefault();
+            
+            const videoFile = document.getElementById('videoInput').files[0];
+            const audioFile = document.getElementById('audioInput').files[0];
+            const text = document.getElementById('overlayText').value;
+
+            const formData = new FormData();
+            formData.append('video', videoFile);
+            formData.append('audio', audioFile);
+            formData.append('text', text);
+
+            // Show the loader when the download starts
+            loader.style.display = 'block';
+
+            try {
+                const response = await fetch('/merge', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'merged_video.mp4';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    alert('Download started');
+                } else {
+                    alert('Error during processing: ' + response.statusText);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                // Hide the loader after processing
+                loader.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>
+
