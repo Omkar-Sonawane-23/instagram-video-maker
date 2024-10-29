@@ -16,14 +16,10 @@ const storage = multer.diskStorage({
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        // Extract the original file extension
         const extension = path.extname(file.originalname);
-        // Rename the file to "merged_file" with the original extension
         cb(null, `input${extension}`);
     }
 });
-
-
 
 const upload = multer({ storage: storage });
 
@@ -32,10 +28,25 @@ function isZapierRequest(req) {
     return req.headers['zapier-event-callback'] === 'true';
 }
 
+// Ensure the output folder exists
+const outputFolderPath = path.join(__dirname, 'output');
+if (!fs.existsSync(outputFolderPath)) {
+    fs.mkdirSync(outputFolderPath);
+}
+
 // Function to delete all files in the uploads directory
 function cleanUploadsDirectory() {
     const uploadPath = path.join(__dirname, 'uploads');
-    return;
+    fs.readdir(uploadPath, (err, files) => {
+        if (err) return console.error("Error reading directory:", err);
+        files.forEach((file) => {
+            try {
+                fs.unlinkSync(path.join(uploadPath, file));
+            } catch (err) {
+                console.error("Error deleting file:", err);
+            }
+        });
+    });
 }
 
 // Endpoint to merge video and audio with text overlay
@@ -47,17 +58,17 @@ app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), async 
     const videoPath = path.join(__dirname, 'uploads', 'input.mp4');
     const audioPath = path.join(__dirname, 'uploads', 'input.mp3');
     const text = req.body.text ? req.body.text.replace(/'/g, "\\'") : 'Default Text';
-    const outputPath = path.join(__dirname, 'uploads', 'merged_video.mp4');
+    const outputPath = path.join(outputFolderPath, 'merged_video.mp4');
 
     // Delete any existing output file
     if (fs.existsSync(outputPath)) {
         fs.unlinkSync(outputPath);
     }
 
-    console.log("videoPath :- " + videoPath + " audiopath :- " + audioPath)
+    console.log("videoPath:", videoPath, "audioPath:", audioPath);
 
     // FFmpeg command to merge video and audio and overlay text
-    await ffmpeg()
+    ffmpeg()
         .input(videoPath)
         .input(audioPath)
         .outputOptions('-c:v', 'libx264')
@@ -95,7 +106,7 @@ app.get('/', (req, res) => {
 });
 
 // Serve processed videos
-app.use('/downloads', express.static(path.join(__dirname, 'uploads')));
+app.use('/downloads', express.static(outputFolderPath));
 
 // Start server
 app.listen(PORT, () => {
