@@ -4,14 +4,14 @@ const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const fs = require('fs');
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 80;
 
 // Setup multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const uploadPath = path.join(__dirname, 'uploads');
         if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath); // Ensure uploads folder exists
+            fs.mkdirSync(uploadPath);
         }
         cb(null, uploadPath);
     },
@@ -31,17 +31,23 @@ function isZapierRequest(req) {
 function cleanUploadsDirectory() {
     const uploadPath = path.join(__dirname, 'uploads');
     fs.readdir(uploadPath, (err, files) => {
-        if (err) throw err;
-        for (const file of files) {
-            fs.unlink(path.join(uploadPath, file), (err) => {
-                if (err) throw err;
-            });
-        }
+        if (err) return console.error("Error reading directory:", err);
+        files.forEach((file) => {
+            try {
+                fs.unlinkSync(path.join(uploadPath, file));
+            } catch (err) {
+                console.error("Error deleting file:", err);
+            }
+        });
     });
 }
 
 // Endpoint to merge video and audio with text overlay
 app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, res) => {
+    if (!req.files['video'] || !req.files['audio']) {
+        return res.status(400).send('Video and audio files are required.');
+    }
+
     const videoPath = path.join(__dirname, 'uploads', req.files['video'][0].filename);
     const audioPath = path.join(__dirname, 'uploads', req.files['audio'][0].filename);
     const text = req.body.text ? req.body.text.replace(/'/g, "\\'") : 'Default Text';
@@ -63,18 +69,14 @@ app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, 
             console.log('Processing finished successfully.');
 
             if (isZapierRequest(req)) {
-                // For Zapier: Respond with a success message and download link
                 res.json({ message: 'Video processing complete', downloadUrl: `http://localhost:${PORT}/downloads/merged_video.mp4` });
             } else {
-                // For non-Zapier: Trigger file download
                 res.download(outputPath, (err) => {
                     if (err) {
                         console.error('Download error:', err);
                     }
                 });
             }
-
-            // Clean up files in uploads directory after response is sent
             cleanUploadsDirectory();
         })
         .on('error', (err) => {
