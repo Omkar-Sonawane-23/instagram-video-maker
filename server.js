@@ -51,7 +51,7 @@ app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, 
     const videoPath = path.join(__dirname, 'uploads', req.files['video'][0].filename);
     const audioPath = path.join(__dirname, 'uploads', req.files['audio'][0].filename);
     const text = req.body.text ? req.body.text.replace(/'/g, "\\'") : 'Default Text';
-    const outputPath = path.join(__dirname, 'uploads', 'merged_video.mp4');
+    const outputPath = path.join(__dirname, 'output', 'merged_video.mp4');
 
     // Delete any existing output file
     if (fs.existsSync(outputPath)) {
