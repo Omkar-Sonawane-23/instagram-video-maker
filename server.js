@@ -27,11 +27,24 @@ function isZapierRequest(req) {
     return req.headers['zapier-event-callback'] === 'true';
 }
 
+// Function to delete all files in the uploads directory
+function cleanUploadsDirectory() {
+    const uploadPath = path.join(__dirname, 'uploads');
+    fs.readdir(uploadPath, (err, files) => {
+        if (err) throw err;
+        for (const file of files) {
+            fs.unlink(path.join(uploadPath, file), (err) => {
+                if (err) throw err;
+            });
+        }
+    });
+}
+
 // Endpoint to merge video and audio with text overlay
 app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, res) => {
     const videoPath = path.join(__dirname, 'uploads', req.files['video'][0].filename);
     const audioPath = path.join(__dirname, 'uploads', req.files['audio'][0].filename);
-    const text = req.body.text || 'Default Text';
+    const text = req.body.text ? req.body.text.replace(/'/g, "\\'") : 'Default Text';
     const outputPath = path.join(__dirname, 'uploads', 'merged_video.mp4');
 
     // FFmpeg command to merge video and audio and overlay text
@@ -55,10 +68,14 @@ app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, 
                     }
                 });
             }
+
+            // Clean up files in uploads directory after response is sent
+            cleanUploadsDirectory();
         })
         .on('error', (err) => {
             console.error('Error during processing:', err);
             res.status(500).send('Error processing files.');
+            cleanUploadsDirectory();
         })
         .save(outputPath);
 });
@@ -79,3 +96,4 @@ app.use('/downloads', express.static(path.join(__dirname, 'uploads')));
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
