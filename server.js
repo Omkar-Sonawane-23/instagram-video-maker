@@ -16,9 +16,14 @@ const storage = multer.diskStorage({
         cb(null, uploadPath);
     },
     filename: (req, file, cb) => {
-        cb(null, file.originalname);
+        // Extract the original file extension
+        const extension = path.extname(file.originalname);
+        // Rename the file to "merged_file" with the original extension
+        cb(null, `input${extension}`);
     }
 });
+
+
 
 const upload = multer({ storage: storage });
 
@@ -48,10 +53,10 @@ app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, 
         return res.status(400).send('Video and audio files are required.');
     }
 
-    const videoPath = path.join(__dirname, 'uploads', req.files['video'][0].filename);
-    const audioPath = path.join(__dirname, 'uploads', req.files['audio'][0].filename);
+    const videoPath = path.join(__dirname, 'uploads', 'input.mp4');
+    const audioPath = path.join(__dirname, 'uploads', 'input.mp3');
     const text = req.body.text ? req.body.text.replace(/'/g, "\\'") : 'Default Text';
-    const outputPath = path.join(__dirname, 'output', 'merged_video.mp4');
+    const outputPath = path.join(__dirname, 'uploads', 'merged_video.mp4');
 
     // Delete any existing output file
     if (fs.existsSync(outputPath)) {
