@@ -39,7 +39,7 @@ function cleanUploadsDirectory() {
 }
 
 // Endpoint to merge video and audio with text overlay
-app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, res) => {
+app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), async (req, res) => {
     if (!req.files['video'] || !req.files['audio']) {
         return res.status(400).send('Video and audio files are required.');
     }
@@ -57,7 +57,7 @@ app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, 
     console.log("videoPath :- " + videoPath + " audiopath :- " + audioPath)
 
     // FFmpeg command to merge video and audio and overlay text
-    ffmpeg()
+    await ffmpeg()
         .input(videoPath)
         .input(audioPath)
         .outputOptions('-c:v', 'libx264')
