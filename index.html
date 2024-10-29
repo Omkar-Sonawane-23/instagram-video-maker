@@ -142,7 +142,6 @@
             formData.append('audio', audioFile);
             formData.append('text', text);
 
-            // Show the loader when the download starts
             loader.style.display = 'block';
 
             try {
@@ -152,27 +151,26 @@
                 });
 
                 if (response.ok) {
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
+                    const result = await response.json();
+                    const downloadUrl = result.downloadUrl;
                     const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
+                    a.href = downloadUrl;
                     a.download = 'merged_video.mp4';
+                    a.style.display = 'none';
                     document.body.appendChild(a);
                     a.click();
-                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
                     alert('Download started');
                 } else {
                     alert('Error during processing: ' + response.statusText);
                 }
             } catch (error) {
                 console.error('Error:', error);
+                alert('An unexpected error occurred.');
             } finally {
-                // Hide the loader after processing
                 loader.style.display = 'none';
             }
         };
     </script>
 </body>
 </html>
-
