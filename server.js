@@ -58,6 +58,8 @@ app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, 
         fs.unlinkSync(outputPath);
     }
 
+    console.log("videoPath :- " + videoPath + " audiopath :- " + audioPath)
+
     // FFmpeg command to merge video and audio and overlay text
     ffmpeg()
         .input(videoPath)
