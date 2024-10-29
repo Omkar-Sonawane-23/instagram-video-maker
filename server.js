@@ -47,6 +47,11 @@ app.post('/merge', upload.fields([{ name: 'video' }, { name: 'audio' }]), (req, 
     const text = req.body.text ? req.body.text.replace(/'/g, "\\'") : 'Default Text';
     const outputPath = path.join(__dirname, 'uploads', 'merged_video.mp4');
 
+    // Delete any existing output file
+    if (fs.existsSync(outputPath)) {
+        fs.unlinkSync(outputPath);
+    }
+
     // FFmpeg command to merge video and audio and overlay text
     ffmpeg()
         .input(videoPath)
@@ -96,4 +101,3 @@ app.use('/downloads', express.static(path.join(__dirname, 'uploads')));
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
-
