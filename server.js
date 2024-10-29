@@ -35,16 +35,7 @@ function isZapierRequest(req) {
 // Function to delete all files in the uploads directory
 function cleanUploadsDirectory() {
     const uploadPath = path.join(__dirname, 'uploads');
-    fs.readdir(uploadPath, (err, files) => {
-        if (err) return console.error("Error reading directory:", err);
-        files.forEach((file) => {
-            try {
-                fs.unlinkSync(path.join(uploadPath, file));
-            } catch (err) {
-                console.error("Error deleting file:", err);
-            }
-        });
-    });
+    return;
 }
 
 // Endpoint to merge video and audio with text overlay
